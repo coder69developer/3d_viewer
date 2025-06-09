@@ -7,6 +7,9 @@ import React, { useRef, useEffect, useMemo } from 'react'
 import { useGLTF, useTexture } from '@react-three/drei'
 import * as THREE from 'three'
 
+// Update the model path to use the correct base URL
+const MODEL_PATH = '/3d_viewer/models/container.glb'
+
 export function Container({ 
   scale = 1,
   position = [0, 0, 0],
@@ -18,7 +21,7 @@ export function Container({
   ...props 
 }) {
   const group = useRef()
-  const { nodes, materials } = useGLTF('/models/container.glb')
+  const { nodes, materials } = useGLTF(MODEL_PATH)
   const logoRef = useRef()
 
   // Create a new material for the body with the specified color
@@ -42,8 +45,8 @@ export function Container({
     if (customLogoUrl && logoRef.current) {
       const textureLoader = new THREE.TextureLoader()
       textureLoader.load(customLogoUrl, (texture) => {
-        // Basic texture settings
-        texture.encoding = THREE.sRGBEncoding
+        // Update texture settings with new color space API
+        texture.colorSpace = THREE.SRGBColorSpace
         texture.flipY = false
         texture.needsUpdate = true
 
@@ -123,4 +126,5 @@ export function Container({
   )
 }
 
-useGLTF.preload('/models/container.glb')
+// Update the preload path as well
+useGLTF.preload(MODEL_PATH)
