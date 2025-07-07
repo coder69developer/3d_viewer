@@ -1,35 +1,69 @@
 import React from 'react';
+import './ModelSelector.css';
+import containerThumbnail from '../assets/container_thumbnail.png';
+import bottleThumbnail from '../assets/bottle_thumbnail.png';
+import sprayBottleThumbnail from '../assets/spary_bottle_thumbnail.png';
 
-export function ModelSelector({ models, selectedModel, onModelSelect }) {
+const availableModels = [
+  {
+    id: 'container',
+    name: 'Container',
+    description: 'Standard shipping container with customizable branding',
+    thumbnail: containerThumbnail,
+    category: 'Shipping'
+  },
+  {
+    id: 'container2',
+    name: 'Bottle',
+    description: 'Premium container with advanced customization options',
+    thumbnail: bottleThumbnail,
+    category: 'Shipping'
+  },
+  {
+    id: 'container3',
+    name: 'Spray Bottle',
+    description: 'Luxury container with premium features and materials',
+    thumbnail: sprayBottleThumbnail,
+    category: 'Shipping'
+  }
+];
+
+export function ModelSelector({ onModelSelect }) {
   return (
-    <div style={{
-      position: 'absolute',
-      bottom: '20px',
-      left: '20px',
-      zIndex: 1000,
-      background: 'white',
-      padding: '1.5rem',
-      borderRadius: '8px',
-      boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-      maxWidth: '300px',
-    }}>
-      <h3 style={{ margin: '0 0 1rem 0' }}>Select Model</h3>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-        {models.map((model) => (
-          <button
+    <div className="model-selector">
+      <div className="selector-header">
+        <h1>Choose Your 3D Model</h1>
+        <p>Select a model to customize and view in 3D</p>
+      </div>
+      
+      <div className="models-grid">
+        {availableModels.map((model) => (
+          <div 
             key={model.id}
-            onClick={() => onModelSelect(model.path)}
-            style={{
-              padding: '0.5rem 1rem',
-              border: '1px solid #ccc',
-              borderRadius: '4px',
-              background: selectedModel === model.path ? '#e0e0e0' : 'white',
-              cursor: 'pointer',
-            }}
+            className="model-card"
+            onClick={() => onModelSelect(model.id)}
           >
-            {model.name}
-          </button>
+            <div className="model-thumbnail">
+              <img 
+                src={model.thumbnail} 
+                alt={`${model.name} thumbnail`}
+                className="model-thumbnail-image"
+              />
+            </div>
+            <div className="model-info">
+              <h3>{model.name}</h3>
+              <p className="model-description">{model.description}</p>
+              <span className="model-category">{model.category}</span>
+            </div>
+            <div className="model-select-button">
+              <span>Select Model</span>
+            </div>
+          </div>
         ))}
+      </div>
+      
+      <div className="selector-footer">
+        <p>More models coming soon...</p>
       </div>
     </div>
   );

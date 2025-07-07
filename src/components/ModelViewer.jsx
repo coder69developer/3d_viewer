@@ -1,10 +1,11 @@
-import React, { Suspense, useState } from 'react';
-import { Canvas } from '@react-three/fiber';
-import { OrbitControls, Environment } from '@react-three/drei';
-import * as THREE from 'three';
-import { Container } from './Container';
+import React, { useState, useRef } from 'react';
+import { Scene3D } from './Scene3D';
+import { ControlsPanel } from './ControlsPanel';
+import './ModelViewer.css';
 
-export function ModelViewer({ modelPath }) {
+
+
+export function ModelViewer({ modelPath, modelConfig, onBackToSelector }) {
   const [containerProps, setContainerProps] = useState({
     scale: 1,
     position: [0, 0, 0],
@@ -13,7 +14,11 @@ export function ModelViewer({ modelPath }) {
     labelVisible: true,
     logoVisible: true,
     customLogoUrl: null,
+    customLabelUrl: null,
   });
+
+  const [screenshotData, setScreenshotData] = useState(null);
+  const screenshotRef = useRef();
 
   const updateContainerProps = (newProps) => {
     setContainerProps(prev => ({ ...prev, ...newProps }));
@@ -32,6 +37,19 @@ export function ModelViewer({ modelPath }) {
     }
   };
 
+  const handleLabelUpload = (event) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      // Create a new FileReader
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        // Use the base64 data URL directly
+        updateContainerProps({ customLabelUrl: e.target.result });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleModelSelect = (modelType) => {
     // Reset container properties when model changes
     setContainerProps(prev => ({
@@ -40,188 +58,156 @@ export function ModelViewer({ modelPath }) {
       rotation: [0, 0, 0],
       position: [0, 0, 0],
       customLogoUrl: null,
+      customLabelUrl: null,
     }));
   };
 
+  const captureScreenshot = () => {
+    if (screenshotRef.current) {
+      screenshotRef.current.capture();
+    }
+  };
+
+  const handleScreenshotCapture = (dataURL) => {
+    setScreenshotData(dataURL);
+  };
+
+  const downloadScreenshot = () => {
+    if (screenshotData) {
+      const link = document.createElement('a');
+      link.download = '3d-model-screenshot.png';
+      link.href = screenshotData;
+      link.click();
+    }
+  };
+
+  const openScreenshotInNewWindow = () => {
+    if (screenshotData) {
+      const newWindow = window.open();
+      newWindow.document.write(`
+        <html>
+          <head>
+            <title>3D Model Screenshot</title>
+            <style>
+              body { 
+                margin: 0; 
+                padding: 20px; 
+                font-family: Arial, sans-serif;
+                background: #f5f5f5;
+              }
+              .container {
+                max-width: 800px;
+                margin: 0 auto;
+                background: white;
+                padding: 20px;
+                border-radius: 8px;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+              }
+              .screenshot {
+                width: 100%;
+                max-width: 100%;
+                height: auto;
+                border: 1px solid #ddd;
+                border-radius: 4px;
+              }
+              .controls {
+                margin-top: 20px;
+                text-align: center;
+              }
+              .btn {
+                padding: 10px 20px;
+                margin: 0 10px;
+                background: #007bff;
+                color: white;
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+                text-decoration: none;
+                display: inline-block;
+              }
+              .btn:hover {
+                background: #0056b3;
+              }
+              .btn-secondary {
+                background: #6c757d;
+              }
+              .btn-secondary:hover {
+                background: #545b62;
+              }
+              .model-info {
+                margin-bottom: 20px;
+                padding: 15px;
+                background: #f8f9fa;
+                border-radius: 4px;
+                border-left: 4px solid #007bff;
+              }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <h1>3D Model Screenshot</h1>
+              <div class="model-info">
+                <h3>Model Specifications:</h3>
+                <p><strong>Scale:</strong> ${containerProps.scale.toFixed(1)}x</p>
+                <p><strong>Rotation:</strong> ${Math.round(containerProps.rotation[1] * (180/Math.PI))}°</p>
+                <p><strong>Body Color:</strong> <span style="color: ${containerProps.bodyColor}">${containerProps.bodyColor}</span></p>
+                <p><strong>Label Visible:</strong> ${containerProps.labelVisible ? 'Yes' : 'No'}</p>
+                <p><strong>Logo Visible:</strong> ${containerProps.logoVisible ? 'Yes' : 'No'}</p>
+                <p><strong>Custom Logo:</strong> ${containerProps.customLogoUrl ? 'Yes' : 'No'}</p>
+                <p><strong>Custom Label:</strong> ${containerProps.customLabelUrl ? 'Yes' : 'No'}</p>
+              </div>
+              <img src="${screenshotData}" alt="3D Model Screenshot" class="screenshot" />
+              <div class="controls">
+                <button class="btn" onclick="window.print()">Print</button>
+                <a href="mailto:?subject=3D Model Reference&body=Please find attached the 3D model screenshot for your reference." class="btn btn-secondary">Email</a>
+                <a href="${screenshotData}" download="3d-model-screenshot.png" class="btn btn-secondary">Download</a>
+              </div>
+            </div>
+          </body>
+        </html>
+      `);
+      newWindow.document.close();
+    }
+  };
+
   return (
-    <div style={{ width: '100%', height: '100vh' }}>
-      <Canvas
-        camera={{ position: [5, 5, 5], fov: 50 }}
-        style={{ background: '#f0f0f0' }}
-        shadows
-      >
-        <ambientLight intensity={0.7} />
-        <directionalLight
-          position={[10, 10, 5]}
-          intensity={1}
-          castShadow
-          shadow-mapSize={[2048, 2048]}
-        />
-        <directionalLight
-          position={[-10, -10, -5]}
-          intensity={0.5}
-          color="#ffffff"
-        />
-        <pointLight position={[0, 5, 0]} intensity={0.5} />
-        
-        <Environment preset="city" />
-        
-        <Suspense fallback={null}>
-          <Container {...containerProps} />
-        </Suspense>
-        
-        <OrbitControls
-          enablePan={true}
-          enableZoom={true}
-          enableRotate={true}
-          minDistance={3}
-          maxDistance={20}
-        />
-      </Canvas>
-
-      {/* Controls panel */}
-      <div
-        style={{
-          position: 'absolute',
-          top: '20px',
-          left: '20px',
-          zIndex: 1000,
-          background: 'white',
-          padding: '1.5rem',
-          borderRadius: '8px',
-          boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-          maxWidth: '300px',
-        }}
-      >
-        <div style={{ 
-          display: 'flex', 
-          justifyContent: 'space-between', 
-          alignItems: 'center',
-          marginBottom: '1rem', 
-          borderBottom: '1px solid #eee', 
-          paddingBottom: '0.5rem' 
-        }}>
-          <h3 style={{ margin: 0 }}>Container Controls</h3>
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
-            <button
-              onClick={() => handleModelSelect('container')}
-              style={{
-                padding: '0.25rem 0.75rem',
-                background: '#007bff',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                fontSize: '0.8rem',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.25rem',
-              }}
-            >
-              <span>Reset</span>
-            </button>
-          </div>
+    <div className="model-viewer">
+      {/* Header */}
+      <div className="app-header">
+        <div className="header-left">
+          <button 
+            onClick={onBackToSelector}
+            className="back-button"
+            title="Back to Model Selection"
+          >
+            ← Back
+          </button>
+          <h1>{modelConfig?.name || '3D Model Viewer'}</h1>
         </div>
-
-        {/* Container Properties */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          {/* Scale Control */}
-          <div>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>
-              Scale: {containerProps.scale.toFixed(1)}
-              <input
-                type="range"
-                min="0.1"
-                max="2"
-                step="0.1"
-                value={containerProps.scale}
-                onChange={(e) => updateContainerProps({ scale: parseFloat(e.target.value) })}
-                style={{ width: '100%', marginTop: '0.25rem' }}
-              />
-            </label>
-          </div>
-
-          {/* Rotation Control */}
-          <div>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>
-              Rotation: {Math.round(containerProps.rotation[1] * (180/Math.PI))}°
-              <input
-                type="range"
-                min="0"
-                max={Math.PI * 2}
-                step="0.1"
-                value={containerProps.rotation[1]}
-                onChange={(e) => updateContainerProps({
-                  rotation: [containerProps.rotation[0], parseFloat(e.target.value), containerProps.rotation[2]]
-                })}
-                style={{ width: '100%', marginTop: '0.25rem' }}
-              />
-            </label>
-          </div>
-
-          {/* Color Control */}
-          <div>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>
-              Body Color
-              <input
-                type="color"
-                value={containerProps.bodyColor}
-                onChange={(e) => updateContainerProps({ bodyColor: e.target.value })}
-                style={{ width: '100%', height: '30px', marginTop: '0.25rem' }}
-              />
-            </label>
-          </div>
-
-          {/* Visibility Controls */}
-          <div style={{ 
-            display: 'flex', 
-            gap: '1rem',
-            padding: '0.5rem',
-            background: '#f8f9fa',
-            borderRadius: '4px',
-          }}>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.9rem' }}>
-              <input
-                type="checkbox"
-                checked={containerProps.labelVisible}
-                onChange={(e) => updateContainerProps({ labelVisible: e.target.checked })}
-              />
-              Show Label
-            </label>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.9rem' }}>
-              <input
-                type="checkbox"
-                checked={containerProps.logoVisible}
-                onChange={(e) => updateContainerProps({ logoVisible: e.target.checked })}
-              />
-              Show Logo
-            </label>
-          </div>
-
-          {/* Logo Upload */}
-          <div style={{
-            padding: '0.5rem',
-            background: '#f8f9fa',
-            borderRadius: '4px',
-          }}>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>
-              Upload Logo
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleLogoUpload}
-                style={{ 
-                  width: '100%', 
-                  marginTop: '0.25rem',
-                  padding: '0.5rem',
-                  border: '1px solid #ddd',
-                  borderRadius: '4px',
-                  background: 'white',
-                }}
-              />
-            </label>
-          </div>
+        <div className="header-info">
+          <span>Custom Container Designer</span>
         </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="main-content">
+        <Scene3D 
+          containerProps={containerProps}
+          screenshotRef={screenshotRef}
+          onScreenshotCapture={handleScreenshotCapture}
+        />
+        
+        <ControlsPanel
+          containerProps={containerProps}
+          updateContainerProps={updateContainerProps}
+          handleLogoUpload={handleLogoUpload}
+          handleLabelUpload={handleLabelUpload}
+          handleModelSelect={handleModelSelect}
+          captureScreenshot={captureScreenshot}
+          screenshotData={screenshotData}
+          openScreenshotInNewWindow={openScreenshotInNewWindow}
+          downloadScreenshot={downloadScreenshot}
+        />
       </div>
     </div>
   );

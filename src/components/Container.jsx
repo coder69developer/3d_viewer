@@ -18,11 +18,13 @@ export function Container({
   labelVisible = true,
   logoVisible = true,
   customLogoUrl = null,
+  customLabelUrl = null,
   ...props 
 }) {
   const group = useRef()
   const { nodes, materials } = useGLTF(MODEL_PATH)
   const logoRef = useRef()
+  const labelRef = useRef()
 
   // Create a new material for the body with the specified color
   const bodyMaterial = useMemo(() => new THREE.MeshStandardMaterial({
@@ -34,6 +36,14 @@ export function Container({
 
   // Create base logo material
   const baseLogoMaterial = useMemo(() => new THREE.MeshBasicMaterial({
+    transparent: true,
+    side: THREE.DoubleSide,
+    depthWrite: false,
+    opacity: 1.0,
+  }), [])
+
+  // Create base label material
+  const baseLabelMaterial = useMemo(() => new THREE.MeshBasicMaterial({
     transparent: true,
     side: THREE.DoubleSide,
     depthWrite: false,
@@ -70,6 +80,41 @@ export function Container({
     }
   }, [customLogoUrl, nodes.logo_img.material])
 
+  // Handle custom label texture
+  useEffect(() => {
+    if (customLabelUrl && labelRef.current) {
+      const textureLoader = new THREE.TextureLoader()
+      textureLoader.load(customLabelUrl, (texture) => {
+        // Update texture settings with new color space API
+        texture.colorSpace = THREE.SRGBColorSpace
+        texture.flipY = false
+        texture.needsUpdate = true
+
+        // Create a new material for the label
+        const labelMaterial = new THREE.MeshBasicMaterial({
+          map: texture,
+          transparent: true,
+          side: THREE.DoubleSide,
+          depthWrite: false,
+          opacity: 1.0,
+        })
+
+        // Apply the material to the label mesh
+        if (labelRef.current) {
+          labelRef.current.material = labelMaterial
+        }
+      })
+    } else if (labelRef.current) {
+      // Reset to default material if no custom label
+      const defaultLabelMaterial = materials['img_HOT868651_Tiefenschutz_AG_10Liter_20104-10--www_500-removeb'].clone()
+      defaultLabelMaterial.side = THREE.DoubleSide
+      defaultLabelMaterial.transparent = true
+      defaultLabelMaterial.depthWrite = false
+      defaultLabelMaterial.needsUpdate = true
+      labelRef.current.material = defaultLabelMaterial
+    }
+  }, [customLabelUrl, materials])
+
   // Clone and modify the label material
   const labelMaterial = useMemo(() => {
     const material = materials['img_HOT868651_Tiefenschutz_AG_10Liter_20104-10--www_500-removeb'].clone()
@@ -102,8 +147,9 @@ export function Container({
       {/* Container label */}
       {labelVisible && (
         <mesh 
+          ref={labelRef}
           geometry={nodes['img_HOT868651_Tiefenschutz_AG_10Liter_20104-10--www_500-removeb'].geometry} 
-          material={labelMaterial}
+          material={customLabelUrl ? baseLabelMaterial : labelMaterial}
           position={[-0.048, 1.414, 2.161]} 
           rotation={[Math.PI / 2, 0, 0]} 
           scale={1.812}
@@ -115,7 +161,7 @@ export function Container({
         <mesh 
           ref={logoRef}
           geometry={nodes.logo_img.geometry} 
-          material={baseLogoMaterial}
+          material={customLogoUrl ? baseLogoMaterial : nodes.logo_img.material}
           position={[-0.32, 1.12, 2.363]} 
           rotation={[Math.PI / 2, 0, 0]} 
           scale={0.3}
