@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Scene3D } from './Scene3D';
+import { ARViewer } from './ARViewer';
 import { ControlsPanel } from './ControlsPanel';
 import './ModelViewer.css';
 
@@ -18,6 +19,7 @@ export function ModelViewer({ modelPath, modelConfig, onBackToSelector }) {
   });
 
   const [screenshotData, setScreenshotData] = useState(null);
+  const [viewMode, setViewMode] = useState('3d'); // '3d' or 'ar'
   const screenshotRef = useRef();
 
   const updateContainerProps = (newProps) => {
@@ -141,6 +143,24 @@ export function ModelViewer({ modelPath, modelConfig, onBackToSelector }) {
                 border-radius: 4px;
                 border-left: 4px solid #007bff;
               }
+              .email-section {
+                margin-top: 20px;
+                padding: 15px;
+                background: #e3f2fd;
+                border-radius: 4px;
+                border: 1px solid #2196f3;
+              }
+              .email-instructions {
+                margin-bottom: 15px;
+                color: #1976d2;
+                font-weight: 500;
+              }
+              .email-options {
+                display: flex;
+                gap: 10px;
+                flex-wrap: wrap;
+                justify-content: center;
+              }
             </style>
           </head>
           <body>
@@ -159,10 +179,72 @@ export function ModelViewer({ modelPath, modelConfig, onBackToSelector }) {
               <img src="${screenshotData}" alt="3D Model Screenshot" class="screenshot" />
               <div class="controls">
                 <button class="btn" onclick="window.print()">Print</button>
-                <a href="mailto:?subject=3D Model Reference&body=Please find attached the 3D model screenshot for your reference." class="btn btn-secondary">Email</a>
                 <a href="${screenshotData}" download="3d-model-screenshot.png" class="btn btn-secondary">Download</a>
               </div>
+              
+              <div class="email-section">
+                <div class="email-instructions">📧 Email Options:</div>
+                <div class="email-options">
+                  <button class="btn btn-secondary" onclick="downloadAndEmail()">Download & Email</button>
+                  <button class="btn btn-secondary" onclick="copyImageToClipboard()">Copy Image</button>
+                  <button class="btn btn-secondary" onclick="shareViaWebShare()">Share</button>
+                </div>
+                <p style="font-size: 0.9rem; color: #666; margin-top: 10px; text-align: center;">
+                  💡 Tip: Download the image first, then attach it to your email manually
+                </p>
+              </div>
             </div>
+            
+            <script>
+              function downloadAndEmail() {
+                // Download the image first
+                const link = document.createElement('a');
+                link.download = '3d-model-screenshot.png';
+                link.href = '${screenshotData}';
+                link.click();
+                
+                // Then open email client
+                setTimeout(() => {
+                  window.open('mailto:?subject=3D Model Reference&body=Please find attached the 3D model screenshot for your reference.');
+                }, 1000);
+              }
+              
+              function copyImageToClipboard() {
+                const img = document.querySelector('.screenshot');
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                canvas.width = img.naturalWidth;
+                canvas.height = img.naturalHeight;
+                ctx.drawImage(img, 0, 0);
+                
+                canvas.toBlob(function(blob) {
+                  const item = new ClipboardItem({ 'image/png': blob });
+                  navigator.clipboard.write([item]).then(function() {
+                    alert('Image copied to clipboard! You can now paste it in your email.');
+                  }).catch(function(err) {
+                    console.error('Failed to copy image: ', err);
+                    alert('Failed to copy image. Please download and attach manually.');
+                  });
+                });
+              }
+              
+              function shareViaWebShare() {
+                if (navigator.share) {
+                  fetch('${screenshotData}')
+                    .then(res => res.blob())
+                    .then(blob => {
+                      const file = new File([blob], '3d-model-screenshot.png', { type: 'image/png' });
+                      navigator.share({
+                        title: '3D Model Screenshot',
+                        text: 'Check out this 3D model screenshot',
+                        files: [file]
+                      });
+                    });
+                } else {
+                  alert('Web Share API not supported. Please download and share manually.');
+                }
+              }
+            </script>
           </body>
         </html>
       `);
@@ -187,28 +269,55 @@ export function ModelViewer({ modelPath, modelConfig, onBackToSelector }) {
         <div className="header-info">
           <span>Custom Container Designer</span>
         </div>
+        <div className="view-mode-toggle">
+          <button
+            onClick={() => setViewMode('3d')}
+            className={`mode-btn ${viewMode === '3d' ? 'active' : ''}`}
+            title="3D Viewer Mode"
+          >
+            🎮 3D View
+          </button>
+          <button
+            onClick={() => setViewMode('ar')}
+            className={`mode-btn ${viewMode === 'ar' ? 'active' : ''}`}
+            title="AR Viewer Mode"
+          >
+            📱 AR View
+          </button>
+        </div>
       </div>
 
       {/* Main Content */}
-      <div className="main-content">
-        <Scene3D 
+      {viewMode === '3d' ? (
+        <div className="main-content">
+          <div className="scene-section">
+            <Scene3D 
+              containerProps={containerProps}
+              screenshotRef={screenshotRef}
+              onScreenshotCapture={handleScreenshotCapture}
+            />
+          </div>
+          
+          <div className="controls-section">
+            <ControlsPanel
+              containerProps={containerProps}
+              updateContainerProps={updateContainerProps}
+              handleLogoUpload={handleLogoUpload}
+              handleLabelUpload={handleLabelUpload}
+              handleModelSelect={handleModelSelect}
+              captureScreenshot={captureScreenshot}
+              screenshotData={screenshotData}
+              openScreenshotInNewWindow={openScreenshotInNewWindow}
+              downloadScreenshot={downloadScreenshot}
+            />
+          </div>
+        </div>
+      ) : (
+        <ARViewer 
           containerProps={containerProps}
-          screenshotRef={screenshotRef}
-          onScreenshotCapture={handleScreenshotCapture}
+          onBackToViewer={() => setViewMode('3d')}
         />
-        
-        <ControlsPanel
-          containerProps={containerProps}
-          updateContainerProps={updateContainerProps}
-          handleLogoUpload={handleLogoUpload}
-          handleLabelUpload={handleLabelUpload}
-          handleModelSelect={handleModelSelect}
-          captureScreenshot={captureScreenshot}
-          screenshotData={screenshotData}
-          openScreenshotInNewWindow={openScreenshotInNewWindow}
-          downloadScreenshot={downloadScreenshot}
-        />
-      </div>
+      )}
     </div>
   );
 } 
