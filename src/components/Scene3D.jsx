@@ -72,10 +72,10 @@ export function Scene3D({ containerProps, screenshotRef, onScreenshotCapture }) 
         shadows
       >
         {/* Balanced lighting for product visualization */}
-        <ambientLight intensity={0.4} />
+        <ambientLight intensity={0.7} />
         <directionalLight
           position={[10, 10, 5]}
-          intensity={0.8}
+          intensity={1}
           castShadow
           shadow-mapSize={[2048, 2048]}
           shadow-camera-far={50}
@@ -86,14 +86,14 @@ export function Scene3D({ containerProps, screenshotRef, onScreenshotCapture }) 
         />
         <directionalLight
           position={[-10, -10, -5]}
-          intensity={0.3}
+          intensity={0.5}
           color="#ffffff"
         />
-        <pointLight position={[0, 5, 0]} intensity={0.2} />
-        <pointLight position={[0, -5, 0]} intensity={0.1} />
+        <pointLight position={[0, 5, 0]} intensity={0.5} />
+        {/* <pointLight position={[0, -5, 0]} intensity={0.1} /> */}
         
         {/* Soft environment lighting */}
-        <Environment preset="apartment" />
+        <Environment preset="city" />
         
         {/* Ground plane for realistic product placement */}
         <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -1.5, 0]} receiveShadow>
