@@ -6,37 +6,16 @@ import { ModelSelector } from './components/ModelSelector'
 // Model configuration - you can expand this with actual model paths
 const modelConfigs = {
   container: {
-    path: '/3d_viewer/models/container.glb',
+    path: 'container',
     name: 'Container',
-    controls: {
-      scale: { min: 0.1, max: 2, step: 0.1 },
-      rotation: { min: 0, max: Math.PI * 2, step: 0.1 },
-      bodyColor: '#ffffff',
-      labelVisible: true,
-      logoVisible: true,
-    }
   },
   container2: {
-    path: '/3d_viewer/models/container.glb', // Using same model for now
+    path: 'container', // Using same model for now
     name: 'Container Pro',
-    controls: {
-      scale: { min: 0.1, max: 2, step: 0.1 },
-      rotation: { min: 0, max: Math.PI * 2, step: 0.1 },
-      bodyColor: '#ffffff',
-      labelVisible: true,
-      logoVisible: true,
-    }
   },
   container3: {
-    path: '/3d_viewer/models/container.glb', // Using same model for now
-    name: 'Container Deluxe',
-    controls: {
-      scale: { min: 0.1, max: 2, step: 0.1 },
-      rotation: { min: 0, max: Math.PI * 2, step: 0.1 },
-      bodyColor: '#ffffff',
-      labelVisible: true,
-      logoVisible: true,
-    }
+    path: 'bottle', // Using same model for now
+    name: 'Spray Bottle',
   }
 };
 
@@ -45,6 +24,7 @@ function App() {
   const [showModelSelector, setShowModelSelector] = useState(true);
 
   const handleModelSelect = (modelId) => {
+    console.log("Selected model ID:", modelId);
     setSelectedModelId(modelId);
     setShowModelSelector(false);
   };

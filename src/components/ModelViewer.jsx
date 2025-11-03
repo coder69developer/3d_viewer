@@ -8,7 +8,7 @@ import './ModelViewer.css';
 
 export function ModelViewer({ modelPath, modelConfig, onBackToSelector }) {
   const [containerProps, setContainerProps] = useState({
-    scale: 1,
+    scale: 0.7,
     position: [0, 0, 0],
     rotation: [0, 0, 0],
     bodyColor: '#ffffff',
@@ -292,6 +292,7 @@ export function ModelViewer({ modelPath, modelConfig, onBackToSelector }) {
         <div className="main-content">
           <div className="scene-section">
             <Scene3D 
+              modelPath={modelPath}
               containerProps={containerProps}
               screenshotRef={screenshotRef}
               onScreenshotCapture={handleScreenshotCapture}

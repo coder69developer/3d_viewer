@@ -2,11 +2,12 @@ import React, { Suspense, useRef, useEffect, useState } from 'react';
 import { Canvas, useThree } from '@react-three/fiber';
 import { OrbitControls, Environment } from '@react-three/drei';
 import * as THREE from 'three';
-import { Container } from './Container';
 import { CameraControls } from './CameraControls';
 import { CameraControlsLogic } from './CameraControlsLogic';
 import { CameraPositionIndicator } from './CameraPositionIndicator';
 import './Scene3D.css';
+import { Bottle } from './Bottle';
+import { Container } from './Container';
 
 // Component to access the renderer for screenshot functionality
 const ScreenshotCapture = React.forwardRef(({ onCapture }, ref) => {
@@ -49,7 +50,7 @@ const ModelCentering = ({ children }) => {
   );
 };
 
-export function Scene3D({ containerProps, screenshotRef, onScreenshotCapture }) {
+export function Scene3D({modelPath, containerProps, screenshotRef, onScreenshotCapture }) {
   const orbitControlsRef = useRef();
   const [showPositionIndicator, setShowPositionIndicator] = useState(false);
   const [showCameraControls, setShowCameraControls] = useState(false);
@@ -59,9 +60,21 @@ export function Scene3D({ containerProps, screenshotRef, onScreenshotCapture }) 
     cameraDistance: 10,
     cameraPosition: [8, 6, 8]
   });
-
   const handleCameraInfoUpdate = (info) => {
     setCameraInfo(info);
+  };
+
+  
+  // 🧱 Decide which model to render
+  const renderModel = () => {
+    if (modelPath === 'bottle') {
+      return <Bottle {...containerProps} />;
+    } else if (modelPath === 'container') {
+      return <Container {...containerProps} />;
+    } else {
+      console.warn('⚠️ Unknown modelPath:', modelPath);
+      return null;
+    }
   };
 
   return (
@@ -120,7 +133,8 @@ export function Scene3D({ containerProps, screenshotRef, onScreenshotCapture }) 
         {/* Center the model in the scene */}
         <ModelCentering>
           <Suspense fallback={null}>
-            <Container {...containerProps} />
+            {/* <Container {...containerProps} /> */}
+            {renderModel()}
           </Suspense>
         </ModelCentering>
         

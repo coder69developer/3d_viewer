@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './ControlsPanel.css';
+import { Leva } from 'leva';
 
 export function ControlsPanel({ 
   containerProps, 
@@ -190,6 +191,9 @@ export function ControlsPanel({
               />
             </label>
           </div>
+
+
+          <Leva collapsed={true} />
         </div>
       </div>
     </div>
